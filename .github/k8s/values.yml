@@ -26,10 +26,10 @@ services:
       EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
       EXECUTION_MODE: "regular"
       N8N_DIAGNOSTICS_ENABLED: "false"
-      N8N_HOST: '{{ .Values.deployment.domain }}'
+      N8N_HOST: 'n8n.dev.{{ .Values.deployment.domain }}'
       N8N_PROTOCOL: '{{ ternary "https" "http" .Values.ingress.enabled }}'
-      N8N_EDITOR_BASE_URL: '{{ include "deployment.url" . }}'
-      WEBHOOK_URL: '{{ include "deployment.url" . }}'
+      N8N_EDITOR_BASE_URL: 'https://n8n.dev.{{ .Values.deployment.domain }}'
+      WEBHOOK_URL: 'https://n8n.dev.{{ .Values.deployment.domain }}'
       N8N_SECURE_COOKIE: '{{ .Values.ingress.enabled }}'
       N8N_PROXY_HOPS: '{{ .Values.deployment.proxyHops }}'
       N8N_LISTEN_ADDRESS: "0.0.0.0"
