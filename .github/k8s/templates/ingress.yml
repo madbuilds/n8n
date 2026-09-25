@@ -26,3 +26,4 @@ spec:
     - hosts:
         - {{ .Values.deployment.name }}{{- if ne .Values.deployment.environment "PRODUCTION" }}.dev{{- end }}.{{ .Values.deployment.domain }}
       secretName: app-{{ .Values.deployment.name }}-tls-secret
+{{- end }}
