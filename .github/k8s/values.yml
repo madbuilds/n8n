@@ -129,7 +129,7 @@ persistence:
   existingClaim: "" #reuse existing PVC if exists (instead of creating <deployment.name>-data
 
 ingress:
-  enabled: false
+  enabled: true
   className: nginx
   annotations: {}
   tlsSecretName: n8n-tls
