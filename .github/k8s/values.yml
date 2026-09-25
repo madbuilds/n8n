@@ -3,7 +3,6 @@ deployment:
   account: default
   environment: TEST
   domain: example.com
-  host: example.com # replace of domain ?
   proxyHops: 2 # used n8n envs ?
 
 defaults: #shared defaults with every container
@@ -27,7 +26,7 @@ services:
       EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
       EXECUTION_MODE: "regular"
       N8N_DIAGNOSTICS_ENABLED: "false"
-      N8N_HOST: '{{ .Values.deployment.host }}'
+      N8N_HOST: '{{ .Values.deployment.domain }}'
       N8N_PROTOCOL: '{{ ternary "https" "http" .Values.ingress.enabled }}'
       N8N_EDITOR_BASE_URL: '{{ include "deployment.url" . }}'
       WEBHOOK_URL: '{{ include "deployment.url" . }}'

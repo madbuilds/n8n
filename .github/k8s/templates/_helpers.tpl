@@ -14,7 +14,7 @@ app.kubernetes.io/instance:    {{ printf "%s-%s" .Values.deployment.name .Values
 
 {{- define "deployment.url" -}}
 {{- if .Values.ingress.enabled -}}
-https://{{ required "deployment.host is required for ingress" .Values.deployment.host }}/
+https://{{ required "deployment.domain is required for ingress" .Values.deployment.domain }}/
 {{- else -}}
 http://localhost/
 {{- end -}}
@@ -43,8 +43,8 @@ http://localhost/
 {{- end -}}
 {{- end -}}
 {{- end -}}
-{{- if and .Values.ingress.enabled (eq .Values.deployment.host "localhost") -}}
-{{- fail "set deployment.host to your DNS hostname before enabling ingress" -}}
+{{- if and .Values.ingress.enabled (eq .Values.deployment.domain "localhost") -}}
+{{- fail "set deployment.domain to your DNS hostname before enabling ingress" -}}
 {{- end -}}
 {{- if .Values.ingress.enabled -}}
 {{- $_ :=  required "ingress.tlsSecretName is required" .Values.ingress.tlsSecretName -}}
