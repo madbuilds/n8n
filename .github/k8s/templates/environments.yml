@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.deployment.name }}-{{ $name }}-env
+  name: {{ $.Values.deployment.name }}-{{ $name }}-env
   labels:
     {{- include "deployment.labels" $ | nindent 4 }}
 data:
@@ -20,7 +20,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.deployment.name }}-{{ $name }}-secrets
+  name: {{ $.Values.deployment.name }}-{{ $name }}-secrets
   labels:
     {{- include "deployment.labels" $ | nindent 4 }}
 type: Opaque
