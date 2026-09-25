@@ -40,8 +40,6 @@ spec:
           type: RuntimeDefault
 
       containers:
-        -
-
         {{- $defaultImage := .Values.defaults.image }}
         {{- range $name, $service := .Values.services }}
         {{- $image := default dict $service.image }}
