@@ -74,7 +74,7 @@ spec:
           {{- end }}
         {{- end }}
 
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ default (printf "%s-data" .Values.deployment.name) .Values.persistence.existingClaim | quote }}
+#      volumes:
+#        - name: data
+#          persistentVolumeClaim:
+#            claimName: {{ default (printf "%s-data" .Values.deployment.name) .Values.persistence.existingClaim | quote }}

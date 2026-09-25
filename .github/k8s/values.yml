@@ -57,9 +57,9 @@ services:
       ports:
         - name: http
           containerPort: 5678
-      volumeMounts:
-        - name: data
-          mountPath: /home/node/.n8n
+#      volumeMounts:
+#        - name: data
+#          mountPath: /home/node/.n8n
       startupProbe:
         httpGet:
           path: /healthz
