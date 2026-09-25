@@ -4,7 +4,7 @@ deployment:
   environment: TEST
   domain: example.com
   host: example.com # replace of domain ?
-  proxyHops: 0 # used n8n envs ?
+  proxyHops: 2 # used n8n envs ?
 
 defaults: #shared defaults with every container
   image: # services.<name>.image can override default
