@@ -27,29 +27,29 @@ jobs:
       - id: repository
         uses: ./.github/actions/common/validate
 
-  publish:
-    needs: validate
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write     # write - if you want to push changes
-      packages: write     # Crucial for pushing package
-      attestations: write # Optional, for supply-chain security
-      id-token: write     # Optional, for OIDC
-    outputs:
-      image-name: ${{ steps.image.outputs.image-name }}
-      image-tags: ${{ steps.image.outputs.image-tags }}
-      image-tag:  ${{ steps.image.outputs.image-tag }}
-      image-digest: ${{ steps.image.outputs.image-digest }}
-    steps:
-      - uses: actions/checkout@v6
-      - id: image
-        uses: ./.github/actions/publish/docker
+#  publish:
+#    needs: validate
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: write     # write - if you want to push changes
+#      packages: write     # Crucial for pushing package
+#      attestations: write # Optional, for supply-chain security
+#      id-token: write     # Optional, for OIDC
+#    outputs:
+#      image-name: ${{ steps.image.outputs.image-name }}
+#      image-tags: ${{ steps.image.outputs.image-tags }}
+#      image-tag:  ${{ steps.image.outputs.image-tag }}
+#      image-digest: ${{ steps.image.outputs.image-digest }}
+#    steps:
+#      - uses: actions/checkout@v6
+#      - id: image
+#        uses: ./.github/actions/publish/docker
 
   deploy:
     environment: ${{ needs.validate.outputs.environment }}
     needs:
       - validate
-      - publish
+#      - publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

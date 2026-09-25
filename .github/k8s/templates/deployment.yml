@@ -1,66 +1,80 @@
+{{- include "deployment.validate" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.service.name }}
+  name: {{ .Values.deployment.name }}
   labels:
-    app: {{ .Values.service.name }} # deployment will have this label
+    {{- include "deployment.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.service.replicas }} # deployment will create this number of pods
-  selector:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector: # deployment manage pods with label key=value
     matchLabels:
-      app: {{ .Values.service.name }} # deployment manage pods with label app=example
+      {{- include "deployment.selector" . | nindent 6 }}
   template:
     metadata:
-      labels:
-        app: {{ .Values.service.name }} # deployment will label pods with app=example
+      labels: # deployment will label pods with key=value
+        {{- include "deployment.labels" . | nindent 8 }}
+      annotations:
+        checksum/environment: {{ include (print $.Template.BasePath "/environments.yml") . | sha256sum }}
     spec:
-      {{- if .Values.deployment.account }}
-      serviceAccountName: {{ .Values.deployment.account }}
+      automountServiceAccountToken: false
+      {{- with .Values.deployment.account }}
+      serviceAccountName: {{ . | quote }}
       {{- end }}
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: # credentials to use when pulling container images
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+
       containers:
-        - name: app
-          image: {{ .Values.service.image.name }}:{{ default "latest" .Values.service.image.tag }}
-          ports:
-            - containerPort: 80
+        -
+
+        {{- $defaultImage := .Values.defaults.image }}
+        {{- range $name, $service := .Values.services }}
+        {{- $image := default dict $service.image }}
+        {{- $native := default dict $service.native }}
+        {{- $maps := include "deployment.environmentMaps" (dict "defaults" $.Values.defaults "service" $service) | fromYaml }}
+        - name: {{ $name }}
+          image: {{ printf "%s:%s" (required (printf "set services.%s.image.name or defaults.image.name" $name) (default $defaultImage.name $image.name)) (required (printf "set services.%s.image.tag or defaults.image.tag" $name) (default $defaultImage.tag $image.tag) | toString) | quote }}
+          imagePullPolicy: {{ default $defaultImage.pullPolicy $image.pullPolicy }}
+
+          {{- if or $maps.environments $maps.secrets }}
           envFrom:
+            {{- if $maps.environments }}
             - configMapRef:
-                name: {{ .Values.service.name }}-env
-          volumeMounts:
-            - name: html
-              mountPath: /usr/share/nginx/html
+                name: {{ $.Values.deployment.name }}-{{ $name }}-env
+            {{- end }}
+            {{- if $maps.secrets }}
+            - secretRef:
+                name: {{ $.Values.deployment.name }}-{{ $name }}-secrets
+            {{- end }}
+          {{- end }}
+
+          securityContext:
+            {{- mergeOverwrite (dict "allowPrivilegeEscalation" false "capabilities" (dict "drop" (list "ALL"))) (default dict $native.securityContext) | toYaml | nindent 12 }}
+
+          {{- range $field := list "env" "command" "args" "ports" "resources" "volumeMounts" "startupProbe" "readinessProbe" "livenessProbe" }}
+          {{- with index $native $field }}
+          {{ $field }}:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- end }}
+        {{- end }}
+
       volumes:
-        - name: html
-          configMap:
-            name: {{ .Values.service.name }}-html
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.service.name }}-env
-  labels:
-    app: {{ .Values.service.name }}
-data:
-  FOO: BAR
-  {{- range $key, $value := .Values.service.environment }}
-  {{ $key }}: {{ $value | quote }}
-  {{- end }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.service.name }}-html
-  labels:
-    app: {{ .Values.service.name }}
-data:
-  index.html: |
-    <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <title>Hello</title>
-      </head>
-      <body style="font-family: sans-serif;">
-        <h1>Hello from Kubernetes nginx 👋</h1>
-        <p>If you can read this, deployment/service/ingress work.</p>
-      </body>
-    </html>
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ default (printf "%s-data" .Values.deployment.name) .Values.persistence.existingClaim | quote }}

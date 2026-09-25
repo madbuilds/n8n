@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.service.name }}
-  labels:
-    app: {{ .Values.service.name }} # service will have this label
+  name: {{ .Values.deployment.name }}
+  labels: # service will have this label
+    {{- include "deployment.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
-  selector:
-    app: {{ .Values.service.name }} # service will forward request to pods with label app=example
+  selector: # service will forward request to pods with label key=value
+    {{- include "deployment.selector" . | nindent 4 }}
   ports:
-    - name: http
-      port: 80
-      targetPort: 80
+    - name: http        # referenced by ingress
+      port: 5678        # service port number
+      targetPort: http  # looks up the named port in selected pods

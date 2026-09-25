@@ -1,0 +1,32 @@
+{{- range $name, $service := .Values.services }}
+{{- $maps := include "deployment.environmentMaps" (dict "defaults" $.Values.defaults "service" $service) | fromYaml }}
+
+{{- with $maps.environments }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.deployment.name }}-{{ $name }}-env
+  labels:
+    {{- include "deployment.labels" $ | nindent 4 }}
+data:
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ tpl ($value | toString) $ | quote }}
+  {{- end }}
+{{- end }}
+
+{{- with $maps.secrets }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.deployment.name }}-{{ $name }}-secrets
+  labels:
+    {{- include "deployment.labels" $ | nindent 4 }}
+type: Opaque
+data:
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ required (printf "pass defaults.secrets.%s or services.%s.secrets.%s from GitHub Secrets" $key $name $key) $value | toString | b64enc | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
