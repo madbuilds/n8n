@@ -1,15 +1,15 @@
 {{- define "deployment.labels" -}}
-app.kubernetes.io/name: {{ .Values.deployment.name }}
-app.kubernetes.io/instance: {{ .Values.deployment.name }}-{{ .Values.deployment.environment }}
-app.kubernetes.io/environment: {{ .Values.deployment.environment }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/version: {{ .Release.Revision }}
-helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+app.kubernetes.io/name:        {{ printf "%s"    .Values.deployment.name | quote }}
+app.kubernetes.io/instance:    {{ printf "%s-%s" .Values.deployment.name .Values.deployment.environment | quote }}
+app.kubernetes.io/environment: {{ printf "%s"    .Values.deployment.environment | quote }}
+app.kubernetes.io/managed-by:  {{ printf "%s"    .Release.Service | quote }}
+app.kubernetes.io/version:     {{ printf "%d"    .Release.Revision | quote }}
+helm.sh/chart:                 {{ printf "%s-%s" .Chart.Name (.Chart.Version | replace "+" "_") | quote }}
 {{- end -}}
 
 {{- define "deployment.selector" -}}
-app.kubernetes.io/name: {{ .Values.deployment.name }}
-app.kubernetes.io/instance: {{ .Values.deployment.name }}-{{ .Values.deployment.environment }}
+app.kubernetes.io/name:        {{ printf "%s"    .Values.deployment.name | quote }}
+app.kubernetes.io/instance:    {{ printf "%s-%s" .Values.deployment.name .Values.deployment.environment | quote }}
 {{- end -}}
 
 {{- define "deployment.url" -}}
