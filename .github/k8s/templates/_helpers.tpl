@@ -24,7 +24,7 @@ http://localhost/
 {{- $defaults := default dict .defaults -}}
 {{- $result := dict -}}
 {{- range $field := list "environments" "secrets" -}}
-{{- $value := deepCopy (default dict (index $defaults $field)) -}}
+{{- $values := deepCopy (default dict (index $defaults $field)) -}}
 {{- range $key, $value := index $.service $field -}}
 {{- $_ := set $values $key $value -}}
 {{- end -}}
