@@ -7,7 +7,7 @@ deployment:
 
 defaults: #shared defaults with every container
   image: # services.<name>.image can override default
-    tag: "2.40.5"
+    tag: "2.40.7"
     pullPolicy: IfNotPresent
   environments: # services.<name>.environments.key can override default
     key: "value"
@@ -17,7 +17,7 @@ defaults: #shared defaults with every container
 services:
   n8n:
     image:
-      name: n8nio/n8n
+      name: ghcr.io/n8n-io/n8n
     environments:
       GENERIC_TIMEZONE: Europe/Moscow
       TZ: Europe/Moscow
@@ -99,7 +99,7 @@ services:
 
   runner:
     image:
-      name: n8nio/runners
+      name: ghcr.io/n8n-io/runners
     environments:
       N8N_RUNNER_TASK_BROKER_URI: "http://127.0.0.1:5679"
       N8N_RUNNERS_LAUNCHER_HEALTH_CHECK_PORT: "5680"
