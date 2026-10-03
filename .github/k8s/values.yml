@@ -1,13 +1,154 @@
-service:
-  name: nginx
-  replicas: 1
-  image:
-    name: nginx
-    tag: 1.27-alpine
-  environment:
-    TZ: Europe/Moscow
-
 deployment:
+  name: n8n
   account: default
   environment: TEST
   domain: example.com
+  proxyHops: 2 # used n8n envs ?
+
+defaults: #shared defaults with every container
+  image: # services.<name>.image can override default
+    tag: "2.40.7"
+    pullPolicy: IfNotPresent
+  environments: # services.<name>.environments.key can override default
+    key: "value"
+  secrets: # services.<name>.secrets.key can override default
+    hidden: "value"
+
+services:
+  n8n:
+    image:
+      name: ghcr.io/n8n-io/n8n
+    environments:
+      GENERIC_TIMEZONE: Europe/Moscow
+      TZ: Europe/Moscow
+
+      # executions / cleanup
+      EXECUTIONS_MODE: "regular"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "1000"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: "all"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: "all"
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "false"
+      EXECUTIONS_DATA_HARD_DELETE_BUFFER: "1"
+      EXECUTIONS_DATA_PRUNE_SOFT_DELETE_INTERVAL: "60"
+      EXECUTIONS_DATA_PRUNE_HARD_DELETE_INTERVAL: "15"
+
+      # basic settings
+      N8N_HOST: 'n8n.dev.{{ .Values.deployment.domain }}'
+      N8N_PROTOCOL: '{{ ternary "https" "http" .Values.ingress.enabled }}'
+      N8N_EDITOR_BASE_URL: 'https://n8n.dev.{{ .Values.deployment.domain }}'
+      N8N_WEBHOOK_URL: 'https://n8n.dev.{{ .Values.deployment.domain }}'
+      N8N_SECURE_COOKIE: '{{ .Values.ingress.enabled }}'
+      N8N_PROXY_HOPS: '{{ .Values.deployment.proxyHops }}'
+      N8N_LISTEN_ADDRESS: "0.0.0.0"
+      N8N_PORT: "5678"
+
+      # security/permissions
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+
+      # task runners
+      N8N_RUNNERS_MODE: "external"
+      N8N_RUNNERS_BROKER_LISTEN_ADDRESS: "127.0.0.1"
+      N8N_RUNNERS_BROKER_PORT: "5679"
+
+      # graceful shutdown
+      N8N_GRACEFUL_SHUTDOWN_TIMEOUT: "30"
+
+      # database
+      DB_TYPE: "sqlite"
+      DB_SQLITE_POOL_SIZE: "2"
+    secrets:
+      N8N_ENCRYPTION_KEY: '{{ .Values.n8n.encryptionKey }}'
+      N8N_RUNNERS_AUTH_TOKEN: '{{ .Values.n8n.authToken }}'
+    native:
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 2Gi
+      ports:
+        - name: http
+          containerPort: 5678
+#      volumeMounts:
+#        - name: data
+#          mountPath: /home/node/.n8n
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        periodSeconds: 5
+        timeoutSeconds: 5
+        failureThreshold: 60
+      readinessProbe:
+        httpGet:
+          path: /healthz/readiness
+          port: http
+        periodSeconds: 10
+        timeoutSeconds: 5
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        periodSeconds: 10
+        timeoutSeconds: 5
+
+  runner:
+    image:
+      name: ghcr.io/n8n-io/runners
+    environments:
+      N8N_RUNNER_TASK_BROKER_URI: "http://127.0.0.1:5679"
+      N8N_RUNNERS_LAUNCHER_HEALTH_CHECK_PORT: "5680"
+    native:
+      env: # reference from n8n container secrets
+        - name: N8N_RUNNERS_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: '{{ .Values.deployment.name }}-n8n-secrets'
+              key: N8N_RUNNERS_AUTH_TOKEN
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
+      ports:
+        - name: runner-health
+          containerPort: 5680
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: runner-health
+        periodSeconds: 5
+        timeoutSeconds: 5
+        failureThreshold: 60
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: runner-health
+        periodSeconds: 10
+        timeoutSeconds: 5
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: runner-health
+        periodSeconds: 10
+        timeoutSeconds: 5
+
+persistence:
+  size: 5Gi
+  storageClass: "" #empty uses cluster default storage class
+  existingClaim: "" #reuse existing PVC if exists (instead of creating <deployment.name>-data
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  tlsSecretName: n8n-tls
+
+imagePullSecrets: []
