@@ -62,5 +62,5 @@ jobs:
             deployment.environment=${{ needs.validate.outputs.environment }}
             deployment.domain=${{ vars.DEPLOYMENT_DOMAIN }}
             deployment.name=${{ needs.validate.outputs.repository_name }}
-            n8n.encyptionKey=${{ vars.N8N_ENCRYPTION_KEY }}
+            n8n.encryptionKey=${{ vars.N8N_ENCRYPTION_KEY }}
             n8n.authToken=${{ vars.N8N_AUTH_TOKEN }}

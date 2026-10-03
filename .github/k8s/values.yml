@@ -61,7 +61,7 @@ services:
       DB_TYPE: "sqlite"
       DB_SQLITE_POOL_SIZE: "2"
     secrets:
-      N8N_ENCRYPTION_KEY: '{{ .Values.n8n.encyptionKey }}'
+      N8N_ENCRYPTION_KEY: '{{ .Values.n8n.encryptionKey }}'
       N8N_RUNNERS_AUTH_TOKEN: '{{ .Values.n8n.authToken }}'
     native:
       resources:
